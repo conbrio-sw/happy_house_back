@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Framework Project</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="shortcut icon" href="img/favicon.ico">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+	<link rel="stylesheet" href="/css/apt.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+	<div class="container">
+		<header id="index_header" class="jumbotron text-center mb-1">
+			<img id="logo" src="/img/happyhouse.png">
+		</header>
+		<!-- nav start -->
+		<nav class="navbar navbar-expand-sm bg-dark navbar-dark rounded">
+			<ul class="navbar-nav">
+				<li class="nav-item">
+					<a class="nav-link" href="/">Home</a>
+				</li>
+				<li class="nav-item dropdown">
+					<a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+						동네 정보
+					</a>
+					<div class="dropdown-menu">
+						<a class="dropdown-item" href="#">APT 매매</a>
+						<a class="dropdown-item" href="#">APT 전월세</a>
+						<a class="dropdown-item" href="#">주택 매매</a>
+						<a class="dropdown-item" href="#">주택 전월세</a>
+						<a class="dropdown-item" href="#">상권 정보</a>
+						<a class="dropdown-item" href="#">환경 정보</a>
+					</div>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/notice">Notice</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#">News</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="#">Contact</a>
+				</li>
+				<!-- 테스트용 -->
+				<li class="nav-item">
+					<a class="nav-link" href="/login">로그인</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="/logout">로그아웃</a>
+				</li>
+			</ul>
+		</nav>
+
+		<section id="index_section">
+			<div class="card col-sm-12 mt-1" style="min-height: 850px;">
+				<div class="card-body">
+					<div class="form-group form-inline justify-content-center">
+						<dt class="col-sm-3">내 관심지역은?</dt>
+						<dt class="col-sm-6" id="myAreaName"></dt>
+						<button type="button" class="btn btn-outline-primary" id="dijSearchBtn" onclick="mst(event)"> 최적경로탐색 </button>
+					</div>
+					<hr>
+					<div style="height:350px; margin-bottom:2%; overflow:auto;">
+					<table class="table mt-2 table-striped">
+						<colgroup>
+							<col width="50">
+							<col width="150">
+							<col width="150">
+							<col width="*">
+							<col width="120">
+							<col width="120">
+						</colgroup>	
+						<thead>
+							<tr>
+							<!--0506추가  -->
+								<th>  </th>
+								<th>상점 종류</th>
+								<th>상점 이름</th>
+								<th class="text-center">주소</th>
+								<th>위도</th>
+								<th>경도</th>
+							</tr>
+						</thead>
+						<tbody id="searchResult"></tbody>
+					</table>
+					</div>
+				<div id="map" style="width:100%;height:500px;"></div>
+				<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=8e63f77e20af6f7e1e6eea500f1e685c&libraries=services"></script>
+				<script type="text/javascript" src="../js/map.js"></script>
+				<script type="text/javascript">
+				$(document).ready(function(){
+					var dongCode = sessionStorage.getItem("userDongCode");
+					console.log(dongCode);
+					if(dongCode == null){
+						alert("관심지역이 없습니다. 등록해주세요");
+						location.href="/";
+					}
+					getDongName(dongCode);
+					
+					
+					
+					
+					$.get("/shops"
+							,{dong: dongCode}
+							,function(data, status){
+								$("tbody").empty();
+								$.each(data, function(index, vo) {
+									let str = `
+										<tr>
+										<td><input type="checkbox" id="checkedList" name="isSearch" value=${index}></td>
+										<td>${vo.shopKind}</td>
+										<td><strong>${vo.shopName}</strong></td>
+										<td>${vo.roadAddress}</td>
+										<td>${vo.lat}</td>
+										<td>${vo.lng}</td>
+									`;
+									$("tbody").append(str);
+								});
+								displayMarkers(data);
+							}
+							, "json"
+					);
+					
+
+				});
+				
+				async function getDongName(dongCode){
+					
+					var dong = dongCode;
+					let fetchOptions = {
+				        method: "GET",
+				    }
+					try{
+					    let response = await fetch("/shops/getDongCodes/" + dong, fetchOptions);
+					    console.log(response);
+					    let data = await response.json();
+					    
+					    var str =" " +  data.sidoName + " " + data.gugunName + " " + data.dongName
+					    
+					    
+					    document.querySelector("#myAreaName").innerHTML = str;
+						
+					}catch(error){
+						console.error(error);
+					}
+				}
+				
+				
+				async function mst(event){
+					var dongCode = sessionStorage.getItem("userDongCode");
+					var arrList = [];
+					$("#checkedList:checked").each(function(){
+						arrList.push($(this).val());
+					});
+					if(arrList.length == 0){
+						alert("가고 싶은 상점을 체크하세요");
+					}
+					
+					else{
+						console.log(arrList);
+						alert(arrList);
+						let urlParams = new URLSearchParams({
+							dong: dongCode,
+							arr: arrList,
+					    });
+						let fetchOptions = {
+						        method: "POST",
+						        body: urlParams,
+						};
+						try{
+							let response = await fetch("/shops/MST", fetchOptions);
+						    console.log(response);
+						    
+						    let data = await response.json();
+						    console.log(data);
+						    $("tbody").empty();
+							$.each(data, function(index, vo) {
+								let str = `
+									<tr class="${colorArr[index%3]}">
+									<td><input type="checkbox" id="aaa" name="isSearch" value=${index}></td>
+									<td>${vo.shopKind}</td>
+									<td>${vo.shopName}</td>
+									<td>${vo.roadAddress}</td>
+									<td>${vo.lat}</td>
+									<td>${vo.lng}</td>
+								`;
+								$("tbody").append(str);
+							});
+							displayMarkers(data);
+						}catch(error){
+							console.error(error);
+						}
+					}
+				}
+				
+				
+				
+				
+
+				$(document).on("click", "#aptSearchBtn", function() {
+					alert("검색");
+					var param = {
+							serviceKey:'ll4XZIl2q/Lbq3oW4OOtKvgZddpzKjC46pwslkRCVHgKhlgPOxSuj/Ur5QwNWhfOSNJkO1WDc2LFXQSivp4kHA==',
+							pageNo:encodeURIComponent('1'),
+							numOfRows:encodeURIComponent('10'),
+							LAWD_CD:encodeURIComponent($("#gugun").val()),
+							DEAL_YMD:encodeURIComponent('202110')
+					};
+					$.get('http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev'
+							,param
+							,function(data, status){
+						console.log(data);
+								var items = $(data).find('item');
+								var jsonArray = new Array();
+								items.each(function() {
+									var jsonObj	= new Object();
+									jsonObj.aptCode = $(this).find('일련번호').text();
+									jsonObj.aptName = $(this).find('아파트').text();
+									jsonObj.dongCode = $(this).find('법정동읍면동코드').text();
+									//jsonObj.dongName = $(this).find('').text();
+									//jsonObj.sidoName = $(this).find('').text();
+									//jsonObj.gugunName = $(this).find('').text();
+									jsonObj.buildYear = $(this).find('건축년도').text();
+									jsonObj.jibun = $(this).find('지번').text();
+									jsonObj.recentPirce = $(this).find('거래금액').text();
+										
+									jsonObj = JSON.stringify(jsonObj);
+									//String 형태로 파싱한 객체를 다시 json으로 변환
+									jsonArray.push(JSON.parse(jsonObj));
+								});
+								console.log(jsonArray);
+								//displayMarkers(jsonArray);
+							}
+							, "xml"
+					);
+					
+					
+					var xhr = new XMLHttpRequest();
+					var url = 'http://openapi.molit.go.kr/OpenAPI_ToolInstallPackage/service/rest/RTMSOBJSvc/getRTMSDataSvcAptTradeDev';
+					var queryParams = '?' + encodeURIComponent('serviceKey') + '='+encodeURIComponent('ll4XZIl2q/Lbq3oW4OOtKvgZddpzKjC46pwslkRCVHgKhlgPOxSuj/Ur5QwNWhfOSNJkO1WDc2LFXQSivp4kHA==');
+					queryParams += '&' + encodeURIComponent('pageNo') + '=' + encodeURIComponent('1'); 
+					queryParams += '&' + encodeURIComponent('numOfRows') + '=' + encodeURIComponent('10'); 
+					queryParams += '&' + encodeURIComponent('LAWD_CD') + '=' + encodeURIComponent($("#gugun").val()); 
+					queryParams += '&' + encodeURIComponent('DEAL_YMD') + '=' + encodeURIComponent('202110'); 
+					xhr.open('GET', url + queryParams);
+					xhr.onreadystatechange = function () {
+					    if (this.readyState == 4) {
+					    	console.log(this.responseXML);
+					        alert('Status: '+this.status+'nHeaders: '+JSON.stringify(this.getAllResponseHeaders())+'nBody: '+this.responseText);
+					    }
+					};
+
+					xhr.send('');
+				});
+				</script>
+				</div>
+			</div>
+		</section>
+	</div>
+</body>
+</html>

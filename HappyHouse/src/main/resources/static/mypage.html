@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<!-- Bootstrap 5 버전 -->
+	<!-- https://getbootstrap.com/docs/5.0/getting-started/introduction/ -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+
+	<script src="//cdn.jsdelivr.net/npm/alertifyjs@1.12.0/build/alertify.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.12.0/build/css/alertify.min.css"/>
+	<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/alertifyjs@1.12.0/build/css/themes/default.min.css"/>
+	<title>회원 가입</title>
+</head>
+<body>
+<br>
+<br>
+	<div class="container">
+		<div class="mb-3 d-flex justify-content-center">
+	  		<h1 class="display-4"><a href="/" style="text-decoration:none; color:black;">HAPPY HOUSE</a></h1>
+		</div>
+		<div class="mb-3">
+			<h2>MyPage</h2>
+		</div>
+		
+		<div id="userDetail">
+			<div class="mb-3">
+                <label for="userName">User Name:</label>
+                <p id="userName"> </p>
+            </div>
+            <div class="mb-3">
+                <label for="userPassword">Password:</label>
+                <p id="userPassword"> </p>
+            </div>
+            <div class="mb-3">
+                <label for="userEmail">Email:</label>
+                <p id="userEmail"> </p>
+            </div>
+            <div class="mb-3">
+                <label for="userIsAdmin">Grade (관리자를 원하시면 문의 바랍니다):</label>
+                <p id="userIsAdmin"> </p>
+            </div>
+            <div class="mb-3">
+                <label for="userInterestArea">관심지역 : </label>
+                <p id="userInterestAreaCode" style="display:none"> </p>
+                <p id="userInterestArea"> </p>
+            </div>
+		<div>
+			<button id="btnUserUpdate" class="btn btn-primary">수정하기</button>
+			<button id="btnUserExit" class="btn btn-primary">탈퇴하기</button>
+		</div>
+		
+		</div>
+		
+		
+		<div id="userUpdate" style='display:none'>
+		<form novalidate >
+            <div class="mb-3">
+                <label for="userName">User Name:</label>
+                <input type="text" class="form-control" id="userName" placeholder="Enter userName" name="userName" required>
+                <div class="valid-feedback">Valid.</div>
+                <div class="invalid-feedback">Please fill out this field.</div>
+            </div>
+            <div class="mb-3">
+                <label for="userPassword">Password:</label>
+                <input type="text" class="form-control" id="userPassword" placeholder="Enter password" name="userPassword" required>
+                <div class="valid-feedback">Valid.</div>
+                <div class="invalid-feedback">1개 이상의 특수문자, 대소문자 및 숫자를 포함하고 8자리 이상이여야 합니다.</div>
+            </div>
+            <div class="mb-3">
+                <label for="userEmail">Email:</label>
+                <input type="text" class="form-control" id="userEmail" placeholder="Enter email" name="userEmail" required>
+                <div class="valid-feedback">Valid.</div>
+                <div class="invalid-feedback">Please fill out this field.</div>
+            </div>
+            <!-- 추가부분(0504) -->
+            <div class="form-group form-inline justify-content-center">
+				<label class="mr-2" for="sido">시도 : </label>
+				<select class="form-control" id="sido">
+					<option value="0">선택</option>
+				</select>
+				<label class="mr-2 ml-3" for="gugun">구군 : </label>
+				<select class="form-control" id="gugun">
+					<option value="0">선택</option>
+				</select>
+				<label class="mr-2 ml-3" for="dong">읍면동 : </label>
+				<select class="form-control" id="dong">
+					<option value="0">선택</option>
+				</select>
+			</div>
+        </form>
+		<div>
+		<br>
+			<button id="btnUserUpdateDone" class="btn btn-primary">회원정보 수정</button>
+		</div>
+			<br>
+		</div>
+	</div>
+
+<script>
+var userAddress;
+
+window.onload = function(){
+	
+    document.querySelector("#userName").focus();
+
+    //회원정보 조회
+    detail();
+    
+  	//추가부분(0504)
+    //address();
+    
+    document.querySelector("#btnUserUpdate").onclick = function(){
+    	address();
+    	document.querySelector("#userDetail").style.display = "none";
+		document.querySelector("#userUpdate").style.display = "";
+		
+		document.querySelector("#userUpdate #userName").value = document.querySelector("#userDetail #userName").innerHTML;
+		document.querySelector("#userUpdate #userPassword").value = document.querySelector("#userDetail #userPassword").innerHTML;
+		document.querySelector("#userUpdate #userEmail").value = document.querySelector("#userDetail #userEmail").innerHTML;
+    }
+    
+    //회원정보 수정
+    document.querySelector("#btnUserUpdateDone").onclick = function(){
+		update();
+    }
+    
+    //탈퇴
+    document.querySelector("#btnUserExit").onclick = function(){
+		exit();
+    }
+    
+    ///////회원정보 수정 시 유효성 체크
+    // manually check
+    document.querySelector("#userName").onblur = function () {
+        if (validateUserName( this.value )) {
+            this.classList.remove("is-invalid");
+            this.classList.add('is-valid');
+        } else {
+            this.classList.remove("is-valid");
+            this.classList.add('is-invalid');
+        }
+    };
+
+    document.querySelector("#userPassword").onblur = function () {
+        if (validatePassword( this.value )) {
+        	this.classList.remove("is-invalid");
+        	this.classList.add('is-valid');
+        } else {
+            this.classList.remove("is-valid");
+            this.classList.add('is-invalid');
+        }
+    };
+
+    document.querySelector("#userPassword2").onblur = function () {
+        if (validatePassword2( this.value )) {
+        	this.classList.remove("is-invalid");
+        	this.classList.add('is-valid');
+        } else {
+            this.classList.remove("is-valid");
+            this.classList.add('is-invalid');
+        }
+    };
+
+    document.querySelector("#userEmail").onblur = function () {
+        if (validateEmail( this.value )) {
+        	this.classList.remove("is-invalid");
+        	this.classList.add('is-valid');
+        } else {
+            this.classList.remove("is-valid");
+            this.classList.add('is-invalid');
+        }
+    };
+
+    document.querySelector('input').onfocus = function () {
+    	this.classList.remove('is-valid', 'is-invalid');
+    };
+    
+	//submit
+    document.querySelector("#btnRegister").onclick = function(){
+        if( document.querySelectorAll("form .is-invalid").length > 0 ){
+            alert("입력이 올바르지 않습니다.")
+        }else{
+        	register();
+        }
+    };
+
+}
+//추가부분(0504)
+function address(){
+	console.log(document.querySelector("#userDetail #userInterestAreaCode").innerHTML);
+	var dongCode = document.querySelector("#userDetail #userInterestAreaCode").innerHTML;
+	var sidoCode = dongCode.substr(0,2);
+	var gugunCode = dongCode.substr(0,5);
+	
+	$.get("/map/sido"
+			,function(data, status){
+				$.each(data, function(index, vo) {
+					if(vo.sidoCode == sidoCode){
+						$("#sido").append("<option value='"+vo.sidoCode+"' selected >"  +vo.sidoName+"</option>");
+						setTimeout(function(){
+			                 $("#sido").trigger("change");
+			              }, 1)
+
+					}else{
+						$("#sido").append("<option value='"+vo.sidoCode+"'>"  +vo.sidoName+"</option>");
+					}
+				});
+			}
+			, "json"
+		);
+	
+	$(document).on("change", "#sido", function() {
+		$.get("/map/gugun"
+				,{sido: $("#sido").val()}
+				,function(data, status){
+					$("#gugun").empty();
+					$("#gugun").append('<option value="0">선택</option>');
+					$.each(data, function(index, vo) {
+						if(vo.gugunCode == gugunCode){
+							$("#gugun").append("<option value='"+vo.gugunCode+"' selected >"  +vo.gugunName+"</option>");
+							setTimeout(function(){
+				                 $("#gugun").trigger("change");
+				              }, 1)
+						}else{
+							$("#gugun").append("<option value='"+vo.gugunCode+"'>"  +vo.gugunName+"</option>");
+						}
+					});
+				}
+				, "json"
+		);
+	});
+	$(document).on("change", "#gugun", function() {
+		$.get("/map/dong"
+				,{gugun: $("#gugun").val()}
+				,function(data, status){
+					$("#dong").empty();
+					$("#dong").append('<option value="0">선택</option>');
+					$.each(data, function(index, vo) {
+						if(vo.dongCode == dongCode){
+							$("#dong").append("<option value='"+vo.dongCode+"' selected >"  +vo.dongName+"</option>");
+						}else{
+							$("#dong").append("<option value='"+vo.dongCode+"'>"  +vo.dongName+"</option>");
+						}
+					});
+				}
+				, "json"
+		);
+	});
+}
+
+
+//회원가입 수정
+async function update(){
+	let urlParams = new URLSearchParams({
+		userName: document.querySelector("#userUpdate #userName").value,
+		userPassword: document.querySelector("#userUpdate #userPassword").value,
+		userEmail: document.querySelector("#userUpdate #userEmail").value,
+		//추가부분(0504)
+		dongCode: document.querySelector("#userUpdate #dong").value,
+    });
+	let fetchOptions = {
+        method: "PUT",
+        body: urlParams,
+    }
+
+	try{
+	    let response = await fetch("/user", fetchOptions);
+	    console.log(response);
+	    let data = await response.json();
+	    if( data.result == "success" ){
+	    	//추가부분(0504)
+	    	sessionStorage.setItem("userDongCode", document.querySelector("#userUpdate #dong").value);
+	    	alert("수정 완료되었습니다");
+	    	document.querySelector("#userDetail").style.display = "";
+			document.querySelector("#userUpdate").style.display = "none";
+	    	detail();
+	    	
+	    }else if( data.result == "fail" ){
+			console.log("update fail");
+		}
+		
+	}catch(error){
+		console.error(error);
+	}
+}
+
+//회원정보 조회
+async function detail(){
+	
+	var userEmail = sessionStorage.getItem("userEmail");
+	let fetchOptions = {
+        method: "GET",
+    }
+	try{
+	    let response = await fetch("/user/" + userEmail, fetchOptions);
+	    console.log(response);
+	    let data = await response.json();
+	    if( data.result == "success" ){
+	    	document.querySelector("#userDetail #userName").innerHTML = data.userName;
+	    	document.querySelector("#userDetail #userPassword").innerHTML = data.userPassword;
+	    	document.querySelector("#userDetail #userEmail").innerHTML = data.userEmail;
+	    	document.querySelector("#userDetail #userIsAdmin").innerHTML = data.isAdmin == 1 ? "Admin" : "Guest";
+	    	document.querySelector("#userDetail #userInterestAreaCode").innerHTML = data.dongCode;
+	    	getDongName(data.dongCode);
+	    	
+	    	sessionStorage.setItem("userName", data.userName);
+	    	sessionStorage.setItem("userEmail", data.userEmail);
+	    	
+	    }else if( data.result == "fail" ){
+			console.log("detail fail");
+		}
+		
+	}catch(error){
+		console.error(error);
+	}
+}
+
+async function getDongName(dongCode){
+	var dong = dongCode;
+	let fetchOptions = {
+        method: "GET",
+    }
+	try{
+	    let response = await fetch("/shops/getDongCodes/" + dong, fetchOptions);
+	    let data = await response.json();
+	    
+	    var str = data.sidoName + " " + data.gugunName + " " + data.dongName;
+	    console.log(str);
+	    document.querySelector("#userDetail #userInterestArea").innerHTML = str;
+		
+	}catch(error){
+		console.error(error);
+	}
+}
+
+
+//탈퇴
+async function exit(){
+	var userEmail = sessionStorage.getItem("userEmail");
+	
+	let urlParams = new URLSearchParams({
+		userEmail: userEmail,
+    });
+	
+	let fetchOptions = {
+        method: "DELETE",
+        body: urlParams,
+    }
+	try{
+	    let response = await fetch("/user", fetchOptions);
+	    console.log(response);
+	    let data = await response.json();
+	    if( data.result == "success" ){
+	    	sessionStorage.clear();
+	    	alert("탈퇴 되었습니다");
+	    	location.href="/";
+	    }else if( data.result == "fail" ){
+			console.log("exit fail");
+		}
+		
+	}catch(error){
+		console.error(error);
+	}
+}
+
+
+
+// jQuery 버전과 비교해서 element 가 아니라 value 를 전달한다.
+function validateUserName(userName) {
+
+    if (userName.length >= 4) return true;
+    else return false;
+}
+
+function validatePassword(userPassword) {
+
+	var patternEngAtListOne = new RegExp(/[a-zA-Z]+/);// + for at least one
+	var patternSpeAtListOne = new RegExp(/[~!@#$%^&*()_+|<>?:{}]+/);// + for at least one
+	var patternNumAtListOne = new RegExp(/[0-9]+/);// + for at least one
+	
+	if( patternEngAtListOne.test( userPassword ) 
+			&& patternSpeAtListOne.test( userPassword )  
+			&& patternNumAtListOne.test( userPassword )
+			&& userPassword.length >= 8
+	){
+		return true;
+	}
+    else return false;
+}
+
+function validatePassword2(userPassword2) {
+    if (userPassword2 == document.querySelector("#userPassword").value ) return true;
+    else return false;
+}
+
+function validateEmail(userEmail) {
+    // ^ 시작일치, $ 끝 일치
+    // {2, 3} 2개 ~ 3개
+    // * 0회 이상, + 1회 이상
+    // [-_.] - 또는 _ 또는 .
+    // ? 없거나 1회
+    let regexp = /^[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_.]?[0-9a-zA-Z])*.[a-zA-Z]{2,3}$/i;
+    if (regexp.test(userEmail)) return true;
+    else return false;
+}
+
+async function register() {
+	
+	var userName = document.querySelector("#userName").value;
+	var userPassword = document.querySelector("#userPassword").value;	
+	var userEmail = document.querySelector("#userEmail").value;	
+	
+	let urlParams = new URLSearchParams({
+		userName: userName,
+		userEmail: userEmail,
+		userPassword: userPassword,
+    });
+	
+	let fetchOptions = {
+        method: "POST",
+        body: urlParams,
+    }
+	
+	try{
+		let response = await fetch("/register", fetchOptions);
+	    console.log(response);
+	    
+	    let data = await response.json();
+	    console.log(data);
+	    if( data.result == "success" ){
+			alertify.alert('Welcome!', '회원가입을 축하합니다. 로그인 페이지로 이동합니다.', function(){
+				window.location.href="/login";
+			});
+	    }else if( data.result == "fail" ){
+	    	alert("서버 오류!!");
+		}
+	}catch(error){
+		consolf.error(error);
+	}
+    
+}
+</script>
+</body>
+</html>
